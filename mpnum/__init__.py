@@ -29,4 +29,4 @@ from .mparray import *
 from .mpsmpo import *
 
 
-__version__ = 0.1
+__version__ = "0.1.2"

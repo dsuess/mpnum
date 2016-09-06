@@ -6,6 +6,7 @@
 
 [![Travis](http://img.shields.io/travis/dseuss/mpnum.svg?label=tests)](https://travis-ci.org/dseuss/mpnum)
 [![Documentation Status](https://readthedocs.org/projects/mpnum/badge/?version=latest)](http://mpnum.readthedocs.org/en/latest/?badge=latest)
+[![PyPI](https://img.shields.io/pypi/dm/mpnum.svg?maxAge=2592000)](https://pypi.python.org/pypi?:action=display&name=mpnum)
 
 This code is work in progress.
 

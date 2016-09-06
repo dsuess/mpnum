@@ -69,3 +69,4 @@ cython_debug
 
 # ipython notebook
 .ipynb_checkpoints
+README.txt

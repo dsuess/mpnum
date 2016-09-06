@@ -10,8 +10,13 @@ import sys
 from setuptools import Command, find_packages, setup
 
 authors = [u"Daniel Suess", u"Milan Holzäpfel"]
+author_emails = ["daniel@dsuess.me", "mail@mjh.name"]
 name = "mpnum"
 description = "matrix product representation library"
+if os.path.isfile('README.txt'):
+    long_description = open('README.txt').read()
+else:
+    long_description = description
 year = "2016"
 
 
@@ -92,15 +97,19 @@ if __name__ == '__main__':
     setup(
         name=name,
         author=', '.join(authors),
+        author_email=', '.join(author_emails),
         url="https://github.com/dseuss/mpnum",
         version=version,
         packages=find_packages(exclude=['tests']),
         license="BSD",
         description=description,
+        long_description=long_description,
         install_requires=_get_install_requires(_install_requires),
-        keywords=[],
+        package_dir={'mpnum': 'mpnum'},
         classifiers=[
-            "Operating System :: OS Indendent",
+            "Development Status :: 4 - Beta",
+            "Operating System :: OS Independent",
+            "License :: OSI Approved :: BSD License",
             "Programming Language :: Python :: 2.7",
             "Programming Language :: Python :: 3.3",
             "Programming Language :: Python :: 3.4",
