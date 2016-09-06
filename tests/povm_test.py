@@ -334,7 +334,7 @@ def test_mppovm_match_elems_bell(eps=1e-10):
 
 
 @pt.mark.parametrize('method, n_samples',
-                     MPPOVM_SAMPLE_PARAM + [pt.mark.long(('cond', 10000))])
+                     MPPOVM_SAMPLE_PARAM + [pt.mark.verylong(('cond', 10000))])
 @pt.mark.parametrize('nr_sites, startsite, local_dim', MPPOVM_PARAM)
 def test_mppovm_sample(
         method, n_samples, nr_sites, startsite, local_dim, rgen):
@@ -509,7 +509,7 @@ def _pytest_want_long(request):
     # FIXME: Is there a better way to find out whether items marked
     # with `long` should be run or not?
     class dummy:
-        keywords = {'long': pt.mark.long}
+        keywords = {'long': pt.mark.verylong}
     return matchmark(dummy, request.config.option.markexpr)
 
 @pt.fixture(params=[False, True])
@@ -530,13 +530,13 @@ def splitpauli(n_samples, nonuniform, request):
 @pt.mark.parametrize(
     'method, n_samples', [
         ('direct', 1000), ('direct', 10000),
-        pt.mark.long(('direct', 100000)), pt.mark.long(('cond', 100))
+        pt.mark.verylong(('direct', 100000)), pt.mark.verylong(('cond', 100))
     ])
 @pt.mark.parametrize(
     'nr_sites, local_dim, bond_dim, measure_width, local_width', [
         (4, 2, 3, 2, 2),
-        pt.mark.long((5, 2, 2, 3, 2)),
-        pt.mark.long((4, 3, 2, 2, 2)),
+        pt.mark.verylong((5, 2, 2, 3, 2)),
+        pt.mark.verylong((4, 3, 2, 2, 2)),
     ])
 @pt.mark.parametrize('nonuniform', [False, True])
 def test_mppovmlist_est_pmf_from(
@@ -590,7 +590,7 @@ def _get_povm(name, nr_sites, local_dim, local_width):
 
 POVM_COMBOS = [
     ('global', 'pauli'), ('splitpauli', 'pauli'), ('pauli', 'pauli'),
-    pt.mark.long(('splitpauli', 'splitpauli')), ('pauli', 'splitpauli')
+    pt.mark.verylong(('splitpauli', 'splitpauli')), ('pauli', 'splitpauli')
 ]
 POVM_IDS = ['+'.join(getattr(x, 'args', (x,))[0]) for x in POVM_COMBOS]
 
@@ -612,18 +612,19 @@ def povm_combo(function, request):
 
 @pt.mark.parametrize(
     'method, n_samples', [
-        pt.mark.long(('cond', 100)),
+        pt.mark.verylong(('cond', 100)),
         ('direct', 1000),
-        pt.mark.long(('direct', 100000)),
+        pt.mark.verylong(('direct', 100000)),
     ])
 @pt.mark.parametrize(
     'nr_sites, local_dim, bond_dim, measure_width, local_width', [
         (3, 2, 3, 2, 2),
-        pt.mark.long((4, 2, 3, 3, 2)),
-        pt.mark.long((5, 2, 3, 2, 2)),
+        pt.mark.verylong((4, 2, 3, 3, 2)),
+        pt.mark.verylong((5, 2, 3, 2, 2)),
     ])
-@pt.mark.parametrize('nonuniform', [True, pt.mark.long(False)])
-@pt.mark.parametrize('function', ['randn', 'ones', 'signs', pt.mark.long('rand')])
+@pt.mark.parametrize('nonuniform', [True, pt.mark.verylong(False)])
+@pt.mark.parametrize('function',
+                     ['randn', 'ones', 'signs', pt.mark.verylong('rand')])
 def test_mppovmlist_est_lfun_from(
         method, n_samples, nr_sites, local_dim, bond_dim, measure_width,
         local_width, nonuniform, function, povm_combo, rgen, eps=1e-10):
