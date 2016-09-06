@@ -230,14 +230,22 @@ def eye(sites, ldim):
     """Returns a MPA representing the identity matrix
 
     :param sites: Number of sites
-    :param ldim: Tuple of int-like of local dimensions
+    :param ldim: Int-like local dimension or iterable of local dimensions
     :returns: Representation of the identity matrix as MPA
 
     >>> I = eye(4, 2)
     >>> I.bdims, I.pdims
     ((1, 1, 1), ((2, 2), (2, 2), (2, 2), (2, 2)))
+    >>> I = eye(3, (3, 4, 5))
+    >>> I.pdims
+    ((3, 3), (4, 4), (5, 5))
     """
-    return mp.MPArray.from_kron(it.repeat(np.eye(ldim), sites))
+    if isinstance(ldim, collections.Iterable):
+        ldim = tuple(ldim)
+        assert len(ldim) == sites
+    else:
+        ldim = it.repeat(ldim, sites)
+    return mp.MPArray.from_kron(map(np.eye, ldim))
 
 
 #########################

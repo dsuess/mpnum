@@ -72,7 +72,7 @@ _install_requires = [
     'SciPy>=0.15',
     'NumPy>=1.5.1',
     'six>=1.0',
-    'PyTest>=2.8.7',
+    'PyTest>=3.0.1',
     'h5py>=2.4'
 ]
 

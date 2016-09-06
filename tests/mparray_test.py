@@ -24,6 +24,8 @@ from mpnum._testing import assert_mpa_almost_equal, \
 # nr_sites, local_dim, bond_dim
 MP_TEST_PARAMETERS = [(1, 7, np.nan), (2, 3, 3), (3, 2, 4), (6, 2, 4),
                       (4, 3, 5), (5, 2, 1)]
+# local_dim, bond_dim
+MP_TEST_PARAMETERS_INJECT = [(2, 4), (3, 3), (2, 5), (2, 1), (1, 2)]
 # nr_sites, local_dim, bond_dim, sites_per_group
 MP_TEST_PARAMETERS_GROUPS = [(6, 2, 4, 3), (6, 2, 4, 2), (4, 3, 5, 2)]
 
@@ -148,6 +150,37 @@ def test_dump_and_load(tmpdir):
 ###############################################################################
 #                            Algebraic operations                             #
 ###############################################################################
+
+
+@pt.mark.parametrize('dtype', MP_TEST_DTYPES)
+@pt.mark.parametrize('nr_sites, local_dim, bond_dim', MP_TEST_PARAMETERS)
+def test_sum(nr_sites, local_dim, bond_dim, rgen, dtype):
+    """Compare mpa.sum() with full array computation"""
+    mpa = factory.random_mpa(nr_sites, local_dim, bond_dim, rgen, dtype)
+    array_sum = mpa.to_array().sum()
+    # Test summation over all indices and different argument values.
+    assert_almost_equal(mpa.sum(), array_sum)
+    assert_almost_equal(mpa.sum(0), array_sum)
+    assert_almost_equal(mpa.sum([0]), array_sum)
+    assert_almost_equal(mpa.sum([[0]] * nr_sites), array_sum)
+
+    # Test summation over site-dependent indices
+    n_plegs = 3 if nr_sites <= 4 and local_dim <= 2 else 2
+    mpa = factory.random_mpa(nr_sites, [local_dim] * n_plegs, bond_dim, rgen, dtype)
+    # Pseudo-randomly choose how many physical legs to sum over at each site.
+    num_sum = ((rgen.choice(range(plegs + 1)), plegs) for plegs in mpa.plegs)
+    # Pseudo-randomly choose which physical legs to sum over.
+    axes = tuple(
+        rgen.choice(range(plegs), num, replace=False) for num, plegs in num_sum)
+    array_axes = tuple(n_plegs * pos + a
+                       for pos, ax in enumerate(axes) for a in ax)
+    mpa_sum = mpa.sum(axes)
+    if hasattr(mpa_sum, 'to_array'):  # possibly, no physical legs are left
+        mpa_sum = mpa_sum.to_array()
+    array_sum = mpa.to_array().sum(array_axes)
+    assert_array_almost_equal(mpa_sum, array_sum)
+
+
 @pt.mark.parametrize('dtype', MP_TEST_DTYPES)
 @pt.mark.parametrize('nr_sites, local_dim, bond_dim', MP_TEST_PARAMETERS)
 def test_dot(nr_sites, local_dim, bond_dim, rgen, dtype):
@@ -511,8 +544,9 @@ def test_outer(nr_sites, local_dim, bond_dim, rgen, dtype):
     assert mp.norm(diff) < 1e-6
 
 
-@pt.mark.parametrize('_, local_dim, bond_dim', MP_TEST_PARAMETERS)
-def test_inject(_, local_dim, bond_dim):
+@pt.mark.parametrize('local_dim, bond_dim', MP_TEST_PARAMETERS_INJECT)
+def test_inject(local_dim, bond_dim):
+    """mp.inject() vs. computation with full arrays"""
     # bond_dim is np.nan for nr_sites = 1 (first argument,
     # ignored). We require a value for bond_dim.
     if np.isnan(bond_dim):
@@ -536,8 +570,11 @@ def test_inject(_, local_dim, bond_dim):
     ac = (ac0 + ac1).reshape(2 * local_dim)
     ac_mpo = mp.MPArray.from_array(global_to_local(ac, sites=2), plegs)
     abbc_mpo = mp.inject(ac_mpo, pos=1, num=2, inject_ten=b)
-    abbc_from_mpo = mpo_to_global(abbc_mpo)
-    assert_array_almost_equal(abbc, abbc_from_mpo)
+    abbc_mpo2 = mp.inject(ac_mpo, pos=[1], num=[2], inject_ten=[b])
+    abbc_mpo3 = mp.inject(ac_mpo, pos=[1], num=None, inject_ten=[[b, b]])
+    assert_array_almost_equal(abbc, mpo_to_global(abbc_mpo))
+    assert_array_almost_equal(abbc, mpo_to_global(abbc_mpo2))
+    assert_array_almost_equal(abbc, mpo_to_global(abbc_mpo3))
 
     # Here, only local order.
     ac = factory._zrandn(local_dim * 2)
@@ -567,8 +604,11 @@ def test_inject(_, local_dim, bond_dim):
     ac = (ac0 + ac1).reshape(2 * local_dim)
     ac_mpo = mp.MPArray.from_array(global_to_local(ac, sites=2), plegs)
     abbc_mpo = mp.inject(ac_mpo, pos=1, num=2, inject_ten=None)
-    abbc_from_mpo = mpo_to_global(abbc_mpo)
-    assert_array_almost_equal(abbc, abbc_from_mpo)
+    abbc_mpo2 = mp.inject(ac_mpo, pos=[1], num=[2])
+    abbc_mpo3 = mp.inject(ac_mpo, pos=[1], inject_ten=[[None, None]])
+    assert_array_almost_equal(abbc, mpo_to_global(abbc_mpo))
+    assert_array_almost_equal(abbc, mpo_to_global(abbc_mpo2))
+    assert_array_almost_equal(abbc, mpo_to_global(abbc_mpo3))
 
     # Here, only local order.
     ac = factory._zrandn(local_dim * 2)
@@ -580,6 +620,56 @@ def test_inject(_, local_dim, bond_dim):
     # Keep local order
     abc_from_mpo = abc_mpo.to_array()
     assert_array_almost_equal(abc, abc_from_mpo)
+
+
+@pt.mark.parametrize('local_dim, bond_dim', MP_TEST_PARAMETERS_INJECT)
+def test_inject_many(local_dim, bond_dim, rgen):
+    """Calling mp.inject() repeatedly vs. calling it with sequence arguments"""
+    mpa = factory.random_mpa(3, local_dim, bond_dim, rgen, normalized=True)
+    inj_lt = [factory._zrandn(s, rgen) for s in [(2, 3), (1,), (2, 2), (3, 2)]]
+
+    mpa_inj1 = mp.inject(mpa, 1, None, [inj_lt[0]])
+    mpa_inj1 = mp.inject(mpa_inj1, 2, 1, inj_lt[0])
+    mpa_inj1 = mp.inject(mpa_inj1, 4, None, [inj_lt[2]])
+    mpa_inj2 = mp.inject(mpa, [1, 2], [2, None], [inj_lt[0], [inj_lt[2]]])
+    mpa_inj3 = mp.inject(mpa, [1, 2], [2, 1], [inj_lt[0], inj_lt[2]])
+    assert_mpa_almost_equal(mpa_inj1, mpa_inj2, True)
+    assert_mpa_almost_equal(mpa_inj1, mpa_inj3, True)
+
+    inj_lt = [inj_lt[:2], inj_lt[2:]]
+    mpa_inj1 = mp.inject(mpa, 1, None, inj_lt[0])
+    mpa_inj1 = mp.inject(mpa_inj1, 4, inject_ten=inj_lt[1])
+    mpa_inj2 = mp.inject(mpa, [1, 2], None, inj_lt)
+    assert_mpa_almost_equal(mpa_inj1, mpa_inj2, True)
+
+
+def test_inject_pdim(rgen):
+    """Check that mp.inject() picks up the correct physical dimension"""
+    bond_dim = 3
+    mpa = factory.random_mpa(3, ([1], [2], [3]), 3, rgen, normalized=True)
+    print(mpa.pdims)
+    mpa_inj = mp.inject(mpa, [0, 2], [1, 1])
+    assert mpa_inj.pdims == ((1, 1), (1,), (2,), (3, 3), (3,))
+    mpa_inj = mp.inject(mpa, [1, 3], [1, 1], None)
+    assert mpa_inj.pdims == ((1,), (2, 2), (2,), (3,), (3, 3))
+
+
+@pt.mark.parametrize('nr_sites, local_dim, bond_dim', MP_TEST_PARAMETERS)
+def test_inject_outer(nr_sites, local_dim, bond_dim, rgen):
+    """Compare mp.inject() with mp.outer()"""
+    if nr_sites == 1:
+        return
+    mpa = factory.random_mpa(nr_sites // 2, local_dim, bond_dim, rgen, True)
+    pten = [factory._zrandn((local_dim,) * 2) for _ in range(nr_sites // 2)]
+    pten_mpa = mp.MPArray.from_kron(pten)
+
+    outer1 = mp.outer((pten_mpa, mpa))
+    outer2 = mp.inject(mpa, 0, inject_ten=pten)
+    assert_mpa_almost_equal(outer1, outer2, True)
+
+    outer1 = mp.outer((mpa, pten_mpa))
+    outer2 = mp.inject(mpa, [len(mpa)], [None], inject_ten=[pten])
+    assert_mpa_almost_equal(outer1, outer2, True)
 
 
 @pt.mark.parametrize('nr_sites, local_dim, bond_dim', MP_TEST_PARAMETERS)

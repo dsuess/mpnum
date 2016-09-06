@@ -37,4 +37,4 @@ install:
     - pip freeze
 
 script:
-    - travis_wait 10 python setup.py test --selector=1
+    - travis_wait 10 bash tests/travis.sh

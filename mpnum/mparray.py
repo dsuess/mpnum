@@ -399,7 +399,7 @@ class MPArray(object):
 
     def conj(self):
         """Complex conjugate"""
-        return type(self)(np.conjugate(self._ltens))
+        return type(self)(map(np.conjugate, self._ltens))
 
     def __add__(self, summand):
         assert len(self) == len(summand), \
@@ -453,6 +453,46 @@ class MPArray(object):
         if np.isscalar(divisor):
             return self.__imul__(1 / divisor)
         raise NotImplementedError("Division by non-scalar not supported")
+
+    def sum(self, axes=None):
+        """Element-wise sum over physical legs
+
+        :param axes: Physical legs to sum over
+
+        axes can have the following values:
+
+        * Sequence of length zero: Sum over nothing
+
+        * Sequence of (sequences or None): `axes[i]` specifies the
+          physical legs to sum over at site `i`; `None` sums over all
+          physical legs at a site
+        * Sequence of integers: `axes` specifies the physical legs to
+          sum over at each site
+        * Single integer: Sum over physical leg `axes` at each site
+        * `None`: Sum over all physical legs at each site
+
+        To not sum over any axes at a certain site, specify the empty
+        sequence for that site.
+
+        """
+        if axes is None:
+            axes = it.repeat(axes)
+        else:
+            if not hasattr(axes, '__iter__'):
+                axes = (axes,)  # Single integer
+            axes = tuple(axes)
+            if len(axes) == 0 or not (axes[0] is not None
+                                      and hasattr(axes[0], '__iter__')):
+                axes = it.repeat(axes)  # Sum over same physical legs everywhere
+            else:
+                assert len(axes) == len(self)
+        axes = (tuple(range(1, plegs + 1)) if ax is None
+                else tuple(a + 1 for a in ax)
+                for ax, plegs in zip(axes, self.plegs))
+        out = type(self)(lt.sum(ax) for ax, lt in zip(axes, self))
+        if sum(out.plegs) == 0:
+            out = out.to_array()
+        return out
 
     ################################
     #  Shape changes, conversions  #
@@ -1115,33 +1155,63 @@ def outer(mpas):
     return MPArray(sum(([ltens.copy() for ltens in mpa] for mpa in mpas), []))
 
 
-#FXIME Why is outer not a special case of this?
-def inject(mpa, pos, num, inject_ten=None):
-    """Like outer(), but place second factor somewhere inside mpa.
+def inject(mpa, pos, num=None, inject_ten=None):
+    """Interleaved outer product of an MPA and a bond dimension 1 MPA
 
-    Return the outer product between mpa and 'num' copies of the local
-    tensor 'inject_ten', but place the copies of 'inject_ten' before
-    site 'pos' inside 'mpa'. Placing at the edges of 'mpa' is not
-    supported (use outer() for that).
+    Return the outer product between mpa and `num` copies of the local
+    tensor `inject_ten`, but place the copies of `inject_ten` before
+    site `pos` inside or outside `mpa`. You can also supply `num =
+    None` and a sequence of local tensors. All legs of the local
+    tensors are interpreted as physical legs. Placing the local
+    tensors at the beginning or end of `mpa` using `pos = 0` or `pos =
+    len(mpa)` is also supported, but :func:`outer()` is preferred for
+    that as it is a much simpler function.
 
-    If 'inject_ten' is omitted, use a square identity matrix of size
-    mpa.pdims[pos][0].
+    If `inject_ten` is omitted, use a square identity matrix of size
+    `mpa.pdims[pos][0]`. If `pos = len(mpa)`, `mpa.pdims[pos - 1][0]`
+    will be used for the size of the matrix.
 
     :param mpa: An MPA.
-    :param pos: Inject sites into the MPA before site 'pos'.
-    :param num: Inject 'num' copies.
-    :param inject_ten: Inject this physical tensor (if None use
-       np.eye(mpa.pdims[pos][0]))
-    :returns: An MPA of length len(mpa) + num
+    :param pos: Inject sites into the MPA before site `pos`.
+    :param num: Inject `num` copies. Can be `None`; in this case
+        `inject_ten` must be a sequence of values.
+    :param inject_ten: Physical tensor to inject (if omitted, an
+        identity matrix will be used; cf. above)
+    :returns: The outer product
+
+    `pos` can also be a sequence of positions. In this case, `num` and
+    `inject_ten` must be either sequences or `None`, where `None` is
+    interpreted as `len(pos) * [None]`. As above, if `num[i]` is
+    `None`, then `inject_ten[i]` must be a sequence of values.
 
     """
-    if inject_ten is None:
-        inject_ten = np.eye(mpa.pdims[pos][0])
-    bdim = mpa.bdims[pos - 1]
-    inject_lten = np.tensordot(np.eye(bdim), inject_ten, axes=((), ()))
-    inject_lten = np.rollaxis(inject_lten, 1, inject_lten.ndim)
-    ltens = it.chain(
-        mpa[:pos], it.repeat(inject_lten, times=num), mpa[pos:])
+    if isinstance(pos, collections.Iterable):
+        pos = tuple(pos)
+        num = (None,) * len(pos) if num is None else tuple(num)
+        inject_ten = (None,) * len(pos) if inject_ten is None else tuple(inject_ten)
+    else:
+        pos, num, inject_ten = (pos,), (num,), (inject_ten,)
+    assert len(pos) == len(num) == len(inject_ten)
+    assert not any(n is None and hasattr(tens, 'shape')
+                   for n, tens in zip(num, inject_ten)), \
+        """num[i] is None requires a list of tensors at inject_ten[i]"""
+    assert all(begin < end for begin, end in zip(pos[:-1], pos[1:]))
+    pos = (0,) + pos + (len(mpa),)
+    pieces = tuple(mpa[begin:end] for begin, end in zip(pos[:-1], pos[1:]))
+    bdims = (l[-1].shape[-1] if l else 1 for l in pieces[:-1])
+    pdims = (r[0].shape[1] if r else mpa[-1].shape[1] for r in pieces[1:])
+    inject_ten = (
+        (
+            np.rollaxis(np.tensordot(
+                np.eye(pdim) if ten is None else ten,
+                np.eye(bdim), axes=((), ())), -1)
+            for ten in (inj if n is None else (inj,) * n)
+        )
+        for bdim, pdim, n, inj in zip(bdims, pdims, num, inject_ten)
+    )
+    ltens = (lt for ltens in zip(pieces, inject_ten) for lten in ltens
+             for lt in lten)
+    ltens = it.chain(ltens, pieces[-1])
     return MPArray(ltens)
 
 
@@ -1239,13 +1309,17 @@ def _prune_ltens(mpa):
     yield last_lten
 
 
-def prune(mpa):
+def prune(mpa, singletons=False):
     """Contract sites with zero physical legs.
 
-    :param mpa: MPA or iterator over local tensors
+    :param MPArray mpa: MPA or iterator over local tensors
+    :param singletons: If True, also contract sites where all physical
+        legs have size 1
     :returns: An MPA of smaller length
 
     """
+    if singletons and any(np.prod(p) == 1 for p in mpa.pdims):
+        mpa = mpa.reshape(() if np.prod(p) == 1 else p for p in mpa.pdims)
     return MPArray(_prune_ltens(mpa))
 
 

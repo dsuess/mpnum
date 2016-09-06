@@ -131,21 +131,32 @@ def z_povm(dim):
     return POVM.from_vectors(np.eye(dim, dim), info_complete=False)
 
 
+def pauli_parts(dim):
+    """The POVMs used by :func:`pauli_povm` as a list
+
+    For `dim > 3`, :func:`x_povm` and :func:`y_povm` are returned. For
+    `dim = 2`, :func:`z_povm` is included as well.
+
+    :param dim: Dimension of the system
+    :returns: Tuple of :class:`POVMs <POVM>`
+
+    """
+    assert dim > 1, "What do you mean by 1-dim. Pauli measurements?"
+    if dim == 2:
+        return (x_povm(dim), y_povm(dim), z_povm(dim))
+    else:
+        return (x_povm(dim), y_povm(dim))
+
+
 def pauli_povm(dim):
-    """ An informationally complete d-level POVM that simplifies to measuring
+    """An informationally complete d-level POVM that simplifies to measuring
     Pauli matrices in the case d=2.
 
     :param dim: Dimension of the system
-    :returns: POVM with generalized Pauli measurments
+    :returns: :class:`POVM` with (generalized) Pauli measurments
     """
-    assert dim > 1, "What do you mean by 1-dim. Pauli measurements?"
-
-    if dim == 2:
-        return concat((x_povm(dim), y_povm(dim), z_povm(dim)), (1 / 3, ) * 3,
-                      info_complete=True)
-    else:
-        return concat((x_povm(dim), y_povm(dim), ), (1 / 2, ) * 2,
-                      info_complete=True)
+    parts = pauli_parts(dim)
+    return concat(parts, (1/len(parts),) * len(parts), info_complete=True)
 
 
 def concat(povms, weights, info_complete=False):
