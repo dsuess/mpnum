@@ -670,15 +670,15 @@ class MPArray(object):
 
         .. math::
 
-           \| u - r c \|^2 &= \| u \|^2 + r (r - 2) \langle u \vert c \rangle,
-           \quad r \ge 0.
+           \| u - r c \|^2 = \| u \|^2 + r (r - 2) \langle u \vert c \rangle,
+           \quad r \ge 0. 
 
         In the special case of :math:`\|u\| = 1` and :math:`c_0 = c/\| c
         \|` (pure quantum states as MPS), we obtain
 
         .. math::
 
-           \| u - c_0 \|^2 &= 2(1 - \sqrt{\langle u \vert c \rangle})
+           \| u - c_0 \|^2 = 2(1 - \sqrt{\langle u \vert c \rangle})
 
         :returns: Inner product :math:`\langle u \vert c \rangle \in
             (0, \infty)` of the original u and its compression c.
