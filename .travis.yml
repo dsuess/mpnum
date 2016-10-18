@@ -37,6 +37,6 @@ install:
     - pip freeze
 
 script:
-    - travis wait 10 coverage run --source=mpnum setup.py test --selector=1
+    - travis_wait 10 coverage run --source=mpnum setup.py test --selector=1
 after_success:
     coveralls
