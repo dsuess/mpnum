@@ -77,7 +77,8 @@ _install_requires = [
     'six>=1.0',
     'PyTest>=2.8.7',
     'h5py>=2.4',
-    'pytest_benchmark>=3'
+    'pytest_benchmark>=3',
+    'coveralls'
 ]
 
 

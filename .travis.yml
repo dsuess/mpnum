@@ -38,3 +38,6 @@ install:
 
 script:
     - travis_wait 10 python setup.py test --selector=1
+    - coverage run --source=mpnum setup.py test --selector=1 --doctest-modules
+after_success:
+    coveralls
