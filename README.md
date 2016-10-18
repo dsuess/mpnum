@@ -7,6 +7,7 @@
 [![Travis](https://travis-ci.org/dseuss/mpnum.svg?branch=master)](https://travis-ci.org/dseuss/mpnum)
 [![Documentation Status](https://readthedocs.org/projects/mpnum/badge/?version=latest)](http://mpnum.readthedocs.org/en/latest/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/github/dseuss/mpnum/badge.svg?branch=master)](https://coveralls.io/github/dseuss/mpnum?branch=feat-coveralls)
+[![Code Climate](https://codeclimate.com/github/dseuss/mpnum/badges/gpa.svg)](https://codeclimate.com/github/dseuss/mpnum)
 [![PyPI](https://img.shields.io/pypi/dm/mpnum.svg?maxAge=2592000)](https://pypi.python.org/pypi?:action=display&name=mpnum)
 
 This code is work in progress.
