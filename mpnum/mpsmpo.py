@@ -243,7 +243,8 @@ def reductions_mpo(mpa, width=None, startsites=None, stopsites=None):
     startsites, stopsites = \
         _check_reductions_args(len(mpa), width, startsites, stopsites)
 
-    if not (np.array(mpa.ndims) == 2).all(): raise ValueError('Every site needs to have exactly two physical legs')
+    if not (np.array(mpa.ndims) == 2).all():
+        raise ValueError('Every site needs to have exactly two physical legs')
     rem_left = {0: np.array(1, ndmin=2)}
     rem_right = rem_left.copy()
 
@@ -396,7 +397,8 @@ def mps_to_pmps(mps):
     :returns: An MPA with two physical legs (system and ancilla)
 
     """
-    if not (np.array(mps.ndims) == 1).all(): raise ValueError('Only implemented for MPS')
+    if not (np.array(mps.ndims) == 1).all():
+        raise ValueError('Only implemented for unit auxiliary dimensions')
     ltens = (lten.reshape(lten.shape[0:2] + (1, lten.shape[2])) for lten in mps.lt)
     return mp.MPArray(ltens)
 
