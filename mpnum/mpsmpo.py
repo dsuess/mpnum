@@ -132,9 +132,10 @@ from six.moves import range
 from . import mparray as mp
 from .utils import local_to_global, matdot
 
+from scipy.linalg import eigh
 
 __all__ = ['mps_to_mpo', 'mps_to_pmps', 'pmps_dm_to_array',
-           'pmps_reduction', 'pmps_to_mpo', 'pmps_to_mps',
+           'pmps_reduction', 'mpo_to_pmps', 'pmps_to_mpo', 'pmps_to_mps',
            'reductions_mpo', 'reductions_mps_as_mpo',
            'reductions_mps_as_pmps', 'reductions_pmps', 'reductions']
 
@@ -370,6 +371,20 @@ def pmps_to_mpo(pmps):
 
     """
     return mp.dot(pmps, pmps.adj())
+
+
+def mpo_to_pmps(mpo):
+    """Convert a tensor product MPO into a local purification MPS mixed state.
+
+        :param MPArray mpo: An MPA with two physical legs and rank one on all sites
+        :returns: An MPA with two physical legs (system and ancilla)
+
+    """
+    assert_array_equal(mpo.ranks, 1)
+    eigs = (eigh(lten[0, ..., 0]) for lten in mpo.lt)
+    ltens = (i[1] * np.sqrt(i[0])[None, ...] for i in eigs)
+    pmps = mp.MPArray.from_kron(ltens)
+    return pmps / mp.norm(pmps)
 
 
 def mps_to_pmps(mps):
