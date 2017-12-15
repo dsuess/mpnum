@@ -125,7 +125,6 @@ References:
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from numpy.testing import assert_array_equal
 
 from six.moves import range
 
@@ -244,7 +243,7 @@ def reductions_mpo(mpa, width=None, startsites=None, stopsites=None):
     startsites, stopsites = \
         _check_reductions_args(len(mpa), width, startsites, stopsites)
 
-    assert_array_equal(mpa.ndims, 2)
+    if not (np.array(mpa.ndims) == 2).all(): raise ValueError('Every site needs to have exactly two physical legs')
     rem_left = {0: np.array(1, ndmin=2)}
     rem_right = rem_left.copy()
 
@@ -376,13 +375,13 @@ def pmps_to_mpo(pmps):
 def mpo_to_pmps(mpo):
     """Convert a tensor product MPO into a local purification MPS mixed state.
 
-        :param MPArray mpo: An MPA with two physical legs and rank one on all sites
-        :returns: An MPA with two physical legs (system and ancilla)
+    :param MPArray mpo: An MPA with two physical legs and rank one on all sites
+    :returns: An MPA with two physical legs (system and ancilla)
 
     """
-    assert_array_equal(mpo.ranks, 1)
-    eigs = (eigh(lten[0, ..., 0]) for lten in mpo.lt)
-    ltens = (i[1] * np.sqrt(i[0])[None, ...] for i in eigs)
+    if not (np.array(mpo.ranks) == 1).all(): raise ValueError('Only implemented for rank-1 MPOs')
+    eigs = (eigh(lten[0, ..., 0] / np.trace(lten[0, ..., 0])) for lten in mpo.lt)
+    ltens = (np.sqrt(vals)[None, ...] * vecs for vals, vecs in eigs)
     pmps = mp.MPArray.from_kron(ltens)
     return pmps / mp.norm(pmps)
 
@@ -397,7 +396,7 @@ def mps_to_pmps(mps):
     :returns: An MPA with two physical legs (system and ancilla)
 
     """
-    assert_array_equal(mps.ndims, 1)
+    if not (np.array(mps.ndims) == 1).all(): raise ValueError('Only implemented for MPS')
     ltens = (lten.reshape(lten.shape[0:2] + (1, lten.shape[2])) for lten in mps.lt)
     return mp.MPArray(ltens)
 
