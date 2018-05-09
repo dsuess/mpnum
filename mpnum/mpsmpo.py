@@ -380,7 +380,8 @@ def mpo_to_pmps(mpo):
     :returns: An MPA with two physical legs (system and ancilla)
 
     """
-    if not (np.array(mpo.ranks) == 1).all(): raise ValueError('Only implemented for rank-1 MPOs')
+    if not (np.array(mpo.ranks) == 1).all():
+        raise ValueError('Only implemented for rank-1 MPOs')
     eigs = (eigh(lten[0, ..., 0] / np.trace(lten[0, ..., 0])) for lten in mpo.lt)
     ltens = (np.sqrt(vals)[None, ...] * vecs for vals, vecs in eigs)
     pmps = mp.MPArray.from_kron(ltens)
