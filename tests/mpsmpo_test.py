@@ -224,7 +224,8 @@ def test_pmps_to_mpo(nr_sites, local_dim, rank, rgen):
     assert_array_almost_equal(rho_mp, rho_np)
 
 
-@pt.mark.parametrize('nr_sites, local_dim', pt.MP_TEST_PARAMETERS)
+@pt.mark.parametrize('nr_sites, local_dim', [(1, 7), (2, 3), (3, 2), (6, 2),
+                                             (4, 3), (5, 2)])
 def test_mpo_to_pmps(nr_sites, local_dim, rgen):
     pmps = factory.random_mpa(nr_sites, (local_dim, local_dim), 1,
                               dtype=np.complex_, randstate=rgen)
