@@ -228,7 +228,7 @@ def random_mpa(sites, ldim, rank, randstate=None, normalized=False,
            [-0.17262967,  2.4505633 ]])
     >>> random_mpa(2, 2, 3, rng, dtype=np.complex_).to_array()
     array([[-0.53552415+1.39701566j, -2.12128866+0.57913253j],
-           [-0.32652114+0.51490923j, -0.32222320-0.32675463j]])
+           [-0.32652114+0.51490923j, -0.3222232 -0.32675463j]])
 
     """
     randfun = ft.partial(_randfuncs[dtype], randstate=randstate)

@@ -95,7 +95,7 @@ def block_diag(summands, axes=(0, 1)):
 
     for array, shape in zip(summands, shapes):
         endpos = startpos + shape
-        pos = [slice(start, end) for start, end in zip(startpos, endpos)]
+        pos = tuple(slice(start, end) for start, end in zip(startpos, endpos))
         res[pos] += array
         startpos = endpos
 
@@ -248,8 +248,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         ``n_components`` is small (``< .1 * min(X.shape)``). Then,
         ``n_iter`` is set to 7.  This improves precision with few
         components. (default ``'auto'``)
-    :param str piter_normalizer: ``'auto'`` (default), ``'QR'``\ , ``'LU'``\ ,
-        ``'none'``\ .  Whether the power iterations are normalized with
+    :param str piter_normalizer: ``'auto'`` (default), ``'QR'``, ``'LU'``,
+        ``'none'``.  Whether the power iterations are normalized with
         step-by-step QR factorization (the slowest but most accurate),
         ``'none'`` (the fastest but numerically unstable when `n_iter` is
         large, e.g.  typically 5 or larger), or ``'LU'`` factorization

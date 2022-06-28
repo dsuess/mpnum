@@ -73,7 +73,7 @@ TESTARGS_RANKS = [1, 10, 'fullrank']
 @pt.mark.parametrize('piter_normalizer', [None, 'qr', 'lu', 'auto'])
 def test_approximate_range_finder(rows, cols, rank, dtype, piter_normalizer, rgen):
     # only guaranteed to work for low-rank matrices
-    if rank is 'fullrank':
+    if rank == 'fullrank':
         return
 
     rf_size = rank + 10
@@ -84,9 +84,8 @@ def test_approximate_range_finder(rows, cols, rank, dtype, piter_normalizer, rge
     Q = em.approx_range_finder(A, rf_size, 7, randstate=rgen,
                                piter_normalizer=piter_normalizer)
 
-    Q = np.asmatrix(Q)
     assert Q.shape == (rows, rf_size)
-    normdist = np.linalg.norm(A - Q * (Q.H * A), ord='fro')
+    normdist = np.linalg.norm(A - Q @ (Q.T.conj() @ A), ord='fro')
     assert normdist < 1e-7
 
 
@@ -98,7 +97,7 @@ def test_approximate_range_finder(rows, cols, rank, dtype, piter_normalizer, rge
                                             (20, mptest.random_fullrank)])
 def test_randomized_svd(rows, cols, rank, dtype, transpose, n_iter, target_gen,
                         rgen):
-    rank = min(rows, cols) - 2 if rank is 'fullrank' else rank
+    rank = min(rows, cols) - 2 if rank == 'fullrank' else rank
     A = target_gen(rows, cols, rank=rank, randstate=rgen, dtype=dtype)
 
     U_ref, s_ref, V_ref = utils.truncated_svd(A, k=rank)
