@@ -16,7 +16,7 @@ help:
 
 
 livehtml:
-	sphinx-autobuild -p 8102 -b html $(SOURCEDIR) $(BUILDDIR)/html -z ../mpnum
+	sphinx-autobuild --port 8102 -b html $(SOURCEDIR) $(BUILDDIR)/html --watch ../mpnum
 .PHONY: help Makefile
 
 # Catch-all target: route all unknown targets to Sphinx using the new
