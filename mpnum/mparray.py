@@ -1398,7 +1398,7 @@ def inject(mpa, pos, num=None, inject_ten=None):
 
 
 def localouter(a, b):
-    """Computes the tensor product of :math:`a \otimes b` locally, that is
+    r"""Computes the tensor product of :math:`a \otimes b` locally, that is
     when a and b have the same number of sites, the new local tensors are the
     tensorproducts of the original ones.
 

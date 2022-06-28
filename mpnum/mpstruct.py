@@ -19,7 +19,7 @@ def _roview(array):
 
 
 class LocalTensors(object):
-    """Core data structure to manage the local tensors of a
+    r"""Core data structure to manage the local tensors of a
     :class:`~mpnum.mparray.MPArray`\ .
 
     The local tensors are kept in ``_ltens``\ , a list of

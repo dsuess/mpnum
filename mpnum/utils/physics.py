@@ -39,7 +39,7 @@ def cXY_local_terms(nr_sites, gamma):
     spin :code:`nr_sites` is the same as the first spin.
 
     The Hamiltonian of the cyclic XY model is given by
-    [:any:`LSM61 <LSM61>`, Eq. 2.1]:
+    [:ref:`LSM61 <LSM61>`, Eq. 2.1]:
 
     .. math::
 
