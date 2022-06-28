@@ -17,8 +17,8 @@
 """
 from __future__ import absolute_import, division, print_function
 
-import collections
 import itertools as it
+from collections.abc import Iterable, Iterator, Sequence
 
 import mpnum as mp
 import numpy as np
@@ -238,7 +238,7 @@ class MPArray(object):
         """
 
         ndims = ndims if ndims is not None else array.ndim
-        ndims = iter(ndims) if isinstance(ndims, collections.Iterable) else ndims
+        ndims = iter(ndims) if isinstance(ndims, Iterable) else ndims
 
         if not has_virtual:
             array = array[None, ..., None]
@@ -298,7 +298,7 @@ class MPArray(object):
         :returns: Iterator over :class:`.MPArray`
 
         """
-        if not isinstance(axes, collections.Iterable):
+        if not isinstance(axes, Iterable):
             axes = it.repeat(axes, len(self))
 
         ltens_iter = it.product(*(iter(np.rollaxis(lten, i + 1))
@@ -466,7 +466,7 @@ class MPArray(object):
             newshapes = (tuple(s for s in pdim if s > 1) for pdim in self.shape)
 
         newshapes = tuple(newshapes)
-        if not isinstance(newshapes[0], collections.Iterable):
+        if not isinstance(newshapes[0], Iterable):
             newshapes = it.repeat(newshapes, times=len(self))
 
         ltens = [_local_reshape(lten, newshape)
@@ -1140,7 +1140,7 @@ def dot(mpa1, mpa2, axes=(-1, 0), astype=None):
         "Length is not equal: {} != {}".format(len(mpa1), len(mpa2))
 
     # adapt the axes from physical to true legs
-    if isinstance(axes[0], collections.Sequence):
+    if isinstance(axes[0], Sequence):
         axes = tuple(tuple(ax + 1 if ax >= 0 else ax - 1 for ax in axes2)
                      for axes2 in axes)
     else:
@@ -1206,7 +1206,7 @@ def partialdot(mpa1, mpa2, start_at, axes=(-1, 0)):
 
     """
     # adapt the axes from physical to true legs
-    if isinstance(axes[0], collections.Sequence):
+    if isinstance(axes[0], Sequence):
         axes = tuple(tuple(ax + 1 if ax >= 0 else ax - 1 for ax in axes2)
                      for axes2 in axes)
     else:
@@ -1365,7 +1365,7 @@ def inject(mpa, pos, num=None, inject_ten=None):
     ``None``, then ``inject_ten[i]`` must be a sequence of values.
 
     """
-    if isinstance(pos, collections.Iterable):
+    if isinstance(pos, Iterable):
         pos = tuple(pos)
         num = (None,) * len(pos) if num is None else tuple(num)
         inject_ten = ((None,) * len(pos)
@@ -1533,7 +1533,7 @@ def partialtrace(mpa, axes=(0, 1), mptype=None):
     :returns: An MPArray (possibly one site with zero physical legs)
 
     """
-    if axes[0] is not None and not isinstance(axes[0], collections.Iterable):
+    if axes[0] is not None and not isinstance(axes[0], Iterable):
         axes = (axes,) * len(mpa)
     # Prevent the user from accidentally tracing out bond legs
     assert all(ax is None or all(-n <= a < n for a in ax)
@@ -1788,7 +1788,7 @@ def _extract_factors(tens, ndims):
     :returns: List of local tensors with given number of legs yielding a
         factorization of tens
     """
-    current = next(ndims) if isinstance(ndims, collections.Iterator) else ndims
+    current = next(ndims) if isinstance(ndims, Iterator) else ndims
     if tens.ndim == current + 2:
         return [tens]
     elif tens.ndim < current + 2:
@@ -1817,8 +1817,8 @@ def _local_dot(ltens_l, ltens_r, axes):
 
     """
     # number of contracted legs need to be the same
-    clegs_l = len(axes[0]) if isinstance(axes[0], collections.Sequence) else 1
-    clegs_r = len(axes[1]) if isinstance(axes[0], collections.Sequence) else 1
+    clegs_l = len(axes[0]) if isinstance(axes[0], Sequence) else 1
+    clegs_r = len(axes[1]) if isinstance(axes[0], Sequence) else 1
     assert clegs_l == clegs_r, \
         "Number of contracted legs differ: {} != {}".format(clegs_l, clegs_r)
     res = np.tensordot(ltens_l, ltens_r, axes=axes)
@@ -1911,7 +1911,7 @@ def _ltens_to_array(ltens):
     :returns: numpy.ndarray representing the contracted MPA
 
     """
-    ltens = ltens if isinstance(ltens, collections.Iterator) else iter(ltens)
+    ltens = ltens if isinstance(ltens, Iterator) else iter(ltens)
     res = first = next(ltens)
     for tens in ltens:
         res = matdot(res, tens)

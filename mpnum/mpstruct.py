@@ -3,7 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 import itertools as it
-import collections
+from collections.abc import Sequence
 
 from six.moves import range, zip
 
@@ -129,7 +129,7 @@ class LocalTensors(object):
                 tens[:-1], tens[1:]))
             assert self[stop - 1].shape[-1] == tens[-1].shape[-1]
 
-            if not isinstance(canonicalization, collections.Sequence):
+            if not isinstance(canonicalization, Sequence):
                 canonicalization = it.repeat(canonicalization)
 
             for ten, pos, norm in zip(tens, range(*indices), canonicalization):

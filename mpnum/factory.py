@@ -5,7 +5,7 @@ from __future__ import division, print_function
 
 import functools as ft
 import itertools as it
-import collections
+from collections.abc import Iterable
 
 import numpy as np
 from scipy.linalg import qr
@@ -150,14 +150,14 @@ def _generate(sites, ldim, rank, func, force_rank):
 
     """
     # If ldim is passed as scalar, make it 1-element tuple.
-    ldim = tuple(ldim) if isinstance(ldim, collections.Iterable) else (ldim,)
+    ldim = tuple(ldim) if isinstance(ldim, Iterable) else (ldim,)
     # If ldim[0] is not iterable, we want the same physical legs on
     # all sites.
-    if not isinstance(ldim[0], collections.Iterable):
+    if not isinstance(ldim[0], Iterable):
         ldim = (ldim,) * sites
     # If rank is not iterable, we want the same rank
     # everywhere.
-    if not isinstance(rank, collections.Iterable):
+    if not isinstance(rank, Iterable):
         rank = (rank,) * (sites - 1)
     else:
         rank = tuple(rank)
@@ -273,7 +273,7 @@ def eye(sites, ldim):
     >>> I.shape
     ((3, 3), (4, 4), (5, 5))
     """
-    if isinstance(ldim, collections.Iterable):
+    if isinstance(ldim, Iterable):
         ldim = tuple(ldim)
         assert len(ldim) == sites
     else:
